@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,33 +19,31 @@ var Response = &response{}
 type response struct {
 }
 
-func (r *response) SendGraphqlResponse(w http.ResponseWriter, msg, err string, status int, result interface{}) {
+func (r *response) SendGraphqlResponse(ctx context.Context, w http.ResponseWriter, msg, err string, status int, result interface{}) {
 	if status != http.StatusOK {
-		_ = Logger.LogError(GetInternalRequestID(), msg, fmt.Errorf(err), nil)
+		_ = Logger.LogError(GetRequestID(ctx), msg, fmt.Errorf(err), nil)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(responseObj{Result: result, Error: err, Message: msg, Status: status})
+	_ = r.SendResponse(ctx, w, http.StatusOK, responseObj{Result: result, Error: err, Message: msg, Status: status})
 }
 
 // SendOkayResponse sends an Okay http response
-func (r *response) SendOkayResponse(w http.ResponseWriter) error {
-	return r.SendResponse(w, 200, map[string]string{})
+func (r *response) SendOkayResponse(ctx context.Context, w http.ResponseWriter) error {
+	return r.SendResponse(ctx, w, 200, map[string]string{})
 }
 
 // SendErrorResponse sends an Error http response
-func (r *response) SendErrorResponse(w http.ResponseWriter, status int, message string) error {
+func (r *response) SendErrorResponse(ctx context.Context, w http.ResponseWriter, status int, message string) error {
 	if status != http.StatusOK {
-		_ = Logger.LogError(GetInternalRequestID(), message, nil, nil)
+		_ = Logger.LogError(GetRequestID(ctx), message, nil, nil)
 	}
-	return r.SendResponse(w, status, map[string]string{"error": message})
+	return r.SendResponse(ctx, w, status, map[string]string{"error": message})
 }
 
 // SendResponse sends an http response
-func (r *response) SendResponse(w http.ResponseWriter, status int, body interface{}) error {
+func (r *response) SendResponse(ctx context.Context, w http.ResponseWriter, status int, body interface{}) error {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	Logger.LogDebug(GetInternalRequestID(), "Response", map[string]interface{}{"statusCode": status})
+	Logger.LogInfo(GetRequestID(ctx), "Response", map[string]interface{}{"statusCode": status})
 	return json.NewEncoder(w).Encode(body)
 }
