@@ -1,9 +1,8 @@
 package helpers
 
 import (
-	"fmt"
+	"errors"
 
-	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -26,10 +25,6 @@ var zapLogger *zap.Logger
 
 func init() {
 	_ = InitLogger(LogLevelInfo, LogFormatJSON, false)
-}
-
-func GetInternalRequestID() string {
-	return internalRequestID + "-" + ksuid.New().String()
 }
 
 func InitLogger(loglevel, logFormat string, isDev bool) error {
@@ -86,11 +81,8 @@ func (l *logger) LogError(requestID, message string, err error, fields map[strin
 	} else {
 		zapLogger.Error(message, zap.Any("error", err), zap.String("requestId", requestID))
 	}
-	if err == nil {
-		return fmt.Errorf(message)
-	}
-	// Return the error message
-	return err
+
+	return errors.New(message)
 }
 
 // LogWarn logs the warning message in the proper format
