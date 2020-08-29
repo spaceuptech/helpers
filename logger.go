@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"fmt"
+	"errors"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -82,7 +82,7 @@ func (l *logger) LogError(requestID, message string, err error, fields map[strin
 		zapLogger.Error(message, zap.Any("error", err), zap.String("requestId", requestID))
 	}
 
-	return fmt.Errorf(message)
+	return errors.New(message)
 }
 
 // LogWarn logs the warning message in the proper format
