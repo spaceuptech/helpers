@@ -44,6 +44,7 @@ func InitLogger(loglevel, logFormat string, isDev bool) error {
 	if err != nil {
 		return err
 	}
+	zap.RedirectStdLog(zapLogger)
 	return nil
 }
 
