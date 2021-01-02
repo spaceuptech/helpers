@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -18,13 +19,14 @@ func (r *response) SendOkayResponse(ctx context.Context, statusCode int, w http.
 
 // SendErrorResponse sends an Error http response
 func (r *response) SendErrorResponse(ctx context.Context, w http.ResponseWriter, statusCode int, err error) error {
-	switch t := err.(type) {
-	case Error:
-		return r.SendResponse(ctx, w, statusCode, map[string]string{"error": t.Message(), "rawError": t.Error()})
-	case error:
-		return r.SendResponse(ctx, w, statusCode, map[string]string{"error": t.Error()})
+	value, ok := err.(Error)
+	if ok {
+		return r.SendResponse(ctx, w, statusCode, map[string]string{"error": value.Error(), "rawError": value.RawError()})
 	}
-	return nil
+	if err == nil {
+		err = errors.New("")
+	}
+	return r.SendResponse(ctx, w, statusCode, map[string]string{"error": err.Error()})
 }
 
 // SendResponse sends an http response

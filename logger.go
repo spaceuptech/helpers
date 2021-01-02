@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"errors"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -72,41 +74,40 @@ func getLogLevel(logLevel string) zapcore.Level {
 	}
 }
 
-type Error interface {
-	Message() string
-	Error() string
-}
+// type Error interface {
+// 	Message() string
+// 	Error() string
+// }
 
-type helperError struct {
+type Error struct {
 	message  string
 	rawError string
 }
 
-func (e helperError) Message() string {
-	return e.message
+func (e Error) RawError() string {
+	return e.rawError
 }
 
-func (e helperError) Error() string {
-	return e.rawError
+func (e Error) Error() string {
+	return e.message
 }
 
 // LogError logs the error in the proper format
 func (l *logger) LogError(requestID, message string, err error, fields map[string]interface{}) error {
-	switch temp := err.(type) {
-	case Error:
-		return temp
-	case error:
-		var v Error = helperError{message: message, rawError: err.Error()}
-		// Log the error
-		if fields != nil {
-			zapLogger.Error(message, zap.Any("error", v.Error()), zap.String("requestId", requestID), zap.Any("fields", fields))
-		} else {
-			zapLogger.Error(message, zap.Any("error", v.Error()), zap.String("requestId", requestID))
-		}
-		return v
-	default:
-		return temp
+	value, ok := err.(Error)
+	if ok {
+		return value
 	}
+	if err == nil {
+		err = errors.New("")
+	}
+	// Log the error
+	if fields != nil {
+		zapLogger.Error(message, zap.Any("error", err.Error()), zap.String("requestId", requestID), zap.Any("fields", fields))
+	} else {
+		zapLogger.Error(message, zap.Any("error", err.Error()), zap.String("requestId", requestID))
+	}
+	return Error{message: message, rawError: err.Error()}
 }
 
 // LogWarn logs the warning message in the proper format
