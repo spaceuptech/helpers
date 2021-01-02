@@ -74,16 +74,36 @@ func getLogLevel(logLevel string) zapcore.Level {
 	}
 }
 
+// Error stores error info
+type Error struct {
+	message  string
+	rawError string
+}
+
+func (e Error) RawError() string {
+	return e.rawError
+}
+
+func (e Error) Error() string {
+	return e.message
+}
+
 // LogError logs the error in the proper format
 func (l *logger) LogError(requestID, message string, err error, fields map[string]interface{}) error {
+	value, ok := err.(Error)
+	if ok {
+		return value
+	}
+	if err == nil {
+		err = errors.New("")
+	}
 	// Log the error
 	if fields != nil {
-		zapLogger.Error(message, zap.Any("error", err), zap.String("requestId", requestID), zap.Any("fields", fields))
+		zapLogger.Error(message, zap.Any("error", err.Error()), zap.String("requestId", requestID), zap.Any("fields", fields))
 	} else {
-		zapLogger.Error(message, zap.Any("error", err), zap.String("requestId", requestID))
+		zapLogger.Error(message, zap.Any("error", err.Error()), zap.String("requestId", requestID))
 	}
-
-	return errors.New(message)
+	return Error{message: message, rawError: err.Error()}
 }
 
 // LogWarn logs the warning message in the proper format
