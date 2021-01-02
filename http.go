@@ -17,11 +17,14 @@ func (r *response) SendOkayResponse(ctx context.Context, statusCode int, w http.
 }
 
 // SendErrorResponse sends an Error http response
-func (r *response) SendErrorResponse(ctx context.Context, w http.ResponseWriter, statusCode int, message string) error {
-	if statusCode != http.StatusOK {
-		_ = Logger.LogError(GetRequestID(ctx), message, nil, nil)
+func (r *response) SendErrorResponse(ctx context.Context, w http.ResponseWriter, statusCode int, err error) error {
+	switch t := err.(type) {
+	case Error:
+		return r.SendResponse(ctx, w, statusCode, map[string]string{"error": t.Message(), "rawError": t.Error()})
+	case error:
+		return r.SendResponse(ctx, w, statusCode, map[string]string{"error": t.Error()})
 	}
-	return r.SendResponse(ctx, w, statusCode, map[string]string{"error": message})
+	return nil
 }
 
 // SendResponse sends an http response

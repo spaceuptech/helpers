@@ -1,8 +1,6 @@
 package helpers
 
 import (
-	"errors"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -74,16 +72,41 @@ func getLogLevel(logLevel string) zapcore.Level {
 	}
 }
 
+type Error interface {
+	Message() string
+	Error() string
+}
+
+type helperError struct {
+	message  string
+	rawError string
+}
+
+func (e helperError) Message() string {
+	return e.message
+}
+
+func (e helperError) Error() string {
+	return e.rawError
+}
+
 // LogError logs the error in the proper format
 func (l *logger) LogError(requestID, message string, err error, fields map[string]interface{}) error {
-	// Log the error
-	if fields != nil {
-		zapLogger.Error(message, zap.Any("error", err), zap.String("requestId", requestID), zap.Any("fields", fields))
-	} else {
-		zapLogger.Error(message, zap.Any("error", err), zap.String("requestId", requestID))
+	switch temp := err.(type) {
+	case Error:
+		return temp
+	case error:
+		var v Error = helperError{message: message, rawError: err.Error()}
+		// Log the error
+		if fields != nil {
+			zapLogger.Error(message, zap.Any("error", v.Error()), zap.String("requestId", requestID), zap.Any("fields", fields))
+		} else {
+			zapLogger.Error(message, zap.Any("error", v.Error()), zap.String("requestId", requestID))
+		}
+		return v
+	default:
+		return temp
 	}
-
-	return errors.New(message)
 }
 
 // LogWarn logs the warning message in the proper format
