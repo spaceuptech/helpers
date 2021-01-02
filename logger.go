@@ -74,11 +74,7 @@ func getLogLevel(logLevel string) zapcore.Level {
 	}
 }
 
-// type Error interface {
-// 	Message() string
-// 	Error() string
-// }
-
+// Error stores error info
 type Error struct {
 	message  string
 	rawError string
