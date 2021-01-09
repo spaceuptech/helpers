@@ -26,7 +26,7 @@ func (r *response) SendErrorResponse(ctx context.Context, w http.ResponseWriter,
 	if err == nil {
 		err = errors.New("")
 	}
-	return r.SendResponse(ctx, w, statusCode, map[string]string{"error": err.Error()})
+	return r.SendResponse(ctx, w, statusCode, map[string]string{"error": err.Error(), "rawError": ""})
 }
 
 // SendResponse sends an http response
