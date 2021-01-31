@@ -80,6 +80,11 @@ type Error struct {
 	rawError string
 }
 
+// NewError creates a new error object
+func NewError(message, rawError string) Error {
+	return Error{message: message, rawError: rawError}
+}
+
 func (e Error) RawError() string {
 	return e.rawError
 }
