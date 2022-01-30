@@ -67,7 +67,7 @@ func getLogLevel(logLevel string) zapcore.Level {
 	case LogLevelInfo:
 		return zap.InfoLevel
 	case LogLevelError:
-		return zap.DebugLevel
+		return zap.ErrorLevel
 	default:
 		Logger.LogInfo(internalRequestID, "Invalid log level provided switching to log level info", nil)
 		return zap.InfoLevel
